@@ -1,13 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<script src='jquery-1.9.1.min.js'></script>
-	<script src='Echarts/echarts.js'></script>
-	<script src='index.js'></script>
-	<title>自定义监控区域地图</title>
+    <meta charset="utf-8">  
+        
 </head>
 <body>
-	<div id="map" style="width:600px;height: 700px;margin: 0 auto"></div>
+    <button>放大</button>
+	<button>缩小</button>
+	<div>
+		<div id="box" data-width="500" data-height="400" data-url="https://www.w3school.com.cn/i/eg_tulip.jpg">
+		</div>
+	</div>
+    
+    <script>
+		class ImageSizer{
+    constructor(ct){
+        let width = parseInt(ct.dataset.width);
+        let height = parseInt(ct.dataset.height);
+        this.img = new Image();
+        let url = ct.dataset.url;
+        this.img.src = url;
+        ct.style.cssText = 'width:' + width +'px;' + 'height:' + height +'px;' + "background-color:#999;overflow:hidden";
+        ct.appendChild(this.img);
+
+		// var spdom = document.createElement("span");
+        // spdom.className = 'flag';            
+        // ct.appendChild(spdom);  
+
+		this.img.onclick = (e) => {
+			console.log(e)
+		}
+        this.img.onload = ()=>{
+			
+            let w = this.img.width;
+            let h = this.img.height;
+            let s1 = width/w;
+            let s2 = height/h;
+            this.scale = s1>s2?s2:s1;//图片进行缩放
+            this.center = {
+                x : -(w-w*this.scale)/2,
+                y : -(h-h*this.scale)/2
+            };
+            this.update();
+        }; 
+        this.img.addEventListener('mousedown',(e)=>{
+            e.preventDefault();
+            this.startPoint={
+                x:e.offsetX,
+                y:e.offsetY
+            }
+        });
+        this.img.addEventListener('mousemove',(e)=>{
+            if(this.startPoint===undefined){
+                return;
+            }
+ 
+            this.center.x+=(e.offsetX-this.startPoint.x)*this.scale;//移动距离
+            this.center.y+=(e.offsetY-this.startPoint.y)*this.scale;
+            this.update();
+        });
+        this.img.addEventListener('mouseup',(e)=>{
+            this.startPoint=undefined;
+        });
+		
+		this.img.addEventListener('mousewheel',this.throttle(this.wheelDelta,50));
+       
+    } 
+    update (){
+           this.img.style.transform= 'translate('+ this.center.x+'px,'+this.center.y+ "px)" + ' scale(' +this.scale+')'; 
+        }
+    sizeIn (){
+		if(this.scale<0.5){
+			return
+		}
+        this.scale -= 0.1;
+        this.update();
+    }
+    sizeOut (){
+        this.scale += 0.1;
+        this.update();
+    }
+	wheelDelta(e){
+		if(e.wheelDelta>0){
+			this.sizeOut();
+		} else {
+			this.sizeIn();
+		}
+	}
+	throttle(fn, delay) {
+        let _this = this;
+        let isRuning = false;
+        return function () {
+            let args = arguments;
+            if (isRuning) {
+                return;
+            }
+            isRuning = true;
+            setTimeout(() => {
+                isRuning = false;
+                fn.apply(_this, args);
+            }, delay);
+        };
+    }
+ 
+}
+window.onload = ()=>{
+   let imgSizer =  new ImageSizer(document.getElementById('box'));
+   let buttons = document.querySelectorAll('button');
+   buttons[0].addEventListener("click",()=>{
+        imgSizer.sizeOut();
+   });
+   buttons[1].addEventListener('click',()=>{
+        imgSizer.sizeIn();
+   });
+   
+}
+	</script>
 </body>
 </html>
